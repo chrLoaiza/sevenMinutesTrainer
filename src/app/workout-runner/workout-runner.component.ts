@@ -1,60 +1,91 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation} from '@angular/core';
 import { WorkoutPlan, ExercisePlan, Exercise } from '../workout-runner/model';
 
 @Component({
   selector: 'app-workout-runner',
   templateUrl: './workout-runner.component.html',
+  // template: `<pre>Current Exercise: {{currentExercise | json}}</pre>
+  //            <pre>Time Left: {{currentExercise.duration - exerciseRunningDuration}}</pre>`,
   styles: []
 })
 export class WorkoutRunnerComponent implements OnInit {
-
-  constructor() { }
   workoutPlan: WorkoutPlan;
-  restExercise: ExercisePlan;
   workoutTimeRemaining: number;
+  restExercise: ExercisePlan;
   currentExerciseIndex: number;
   currentExercise: ExercisePlan;
   exerciseRunningDuration: number;
+
+  constructor() { 
+  }
 
   ngOnInit() {
     this.workoutPlan = this.buildWorkout();
     this.restExercise = new ExercisePlan(
       new Exercise('rest', 'Relax!', 'Relax a bit', 'rest.png'),
       this.workoutPlan.restBetweenExercise);
+    this.start()
   }
 
-  start(){
+  start() {
     this.workoutTimeRemaining = this.workoutPlan.totalWorkoutDuration();
     this.currentExerciseIndex = 0;
     this.startExercise(this.workoutPlan.exercises[this.currentExerciseIndex])
   }
 
-  startExercise(exercisePlan : ExercisePlan){
+  startExercise(exercisePlan: ExercisePlan) {
     this.currentExercise = exercisePlan;
     this.exerciseRunningDuration = 0;
     const intervalId = setInterval(() => {
-      if(this.exerciseRunningDuration >= this.currentExercise.duration){
+      if (this.exerciseRunningDuration >= this.currentExercise.duration) {
         clearInterval(intervalId);
-      }else{
+        const next: ExercisePlan = this.getNextExercise();
+        if (next) {
+          if (next !== this.restExercise) {
+            this.currentExerciseIndex++;
+          }
+          this.startExercise(next);
+        }
+        else {
+          console.log('Workout complete!!!!!!');
+        }
+      } 
+      else {
         this.exerciseRunningDuration++;
       }
-    }, 1000)
+    }, 1000);
+  }
+
+  getNextExercise(): ExercisePlan{
+    let nextExercise: ExercisePlan = null;
+    if(this.currentExercise === this.restExercise){
+      nextExercise = this.workoutPlan.exercises[this.currentExerciseIndex + 1]
+    }
+    else if(this.currentExerciseIndex < this.workoutPlan.exercises.length - 1){
+      nextExercise = this.restExercise
+    }
+    return nextExercise;
   }
 
   buildWorkout(): WorkoutPlan {
-    let workout = new WorkoutPlan('7MinWorkout',
-      "7 Minute Workout", 10, []);
+    let workout = new WorkoutPlan('7MinWorkout', "7 Minute Workout", 10, []);
     workout.exercises.push(
       new ExercisePlan(
         new Exercise(
           'jumpingJacks',
           'jumping Jacks',
           'A jumping jack or star jump, also called side straddle hop is a physical jumping exercise.',
-          'jumpingJacks.png',
+          'JumpingJacks.png',
           'jumpingJacks.wav',
-          'Assume an erect position, with feet together and arms at your side. ...',
+          `Assume an erect position, with feet together and arms at your side.
+          Slightly bend your knees, and propel yourself a few inches into the air.
+                            While in air, bring your legs out to the side about shoulder width or slightly wider.
+                            As you are moving your legs outward, you should raise your arms up over your head; arms should be
+                            slightly bent throughout the entire in-air movement.
+                            Your feet should land shoulder width or wider as your hands meet above your head with arms slightly bent`,
           ['dmYwZH_BNd0', 'BABOdJ-2Z6o', 'c4DAnQ6DtF8']),
         30));
+        
     workout.exercises.push(
       new ExercisePlan(
         new Exercise(
